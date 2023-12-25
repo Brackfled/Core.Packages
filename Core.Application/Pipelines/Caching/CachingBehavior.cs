@@ -1,5 +1,4 @@
-﻿using Core.Application.Pipelines.Transaction;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -18,15 +17,16 @@ namespace Core.Application.Pipelines.Caching
         private readonly CacheSettings _cacheSettings;
         private readonly IDistributedCache _cache;
 
-        public CachingBehavior( IDistributedCache cache, IConfiguration configuration)
+        public CachingBehavior(IDistributedCache cache, IConfiguration configuration)
         {
-            _cacheSettings = configuration.GetSection("CacheSettings").Get<CacheSettings>() ?? throw new InvalidOperationException();
+            _cacheSettings = configuration.GetSection("CacheSettings").Get<CacheSettings>() ?? throw new InvalidOperationException(); 
             _cache = cache;
         }
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            if (request.BypassCache) {
+            if (request.ByPassCache)
+            {
                 return await next();
             }
 
@@ -34,28 +34,34 @@ namespace Core.Application.Pipelines.Caching
             byte[]? cachedResponse = await _cache.GetAsync(request.CacheKey, cancellationToken);
             if (cachedResponse != null) 
             {
+            
                 response = JsonSerializer.Deserialize<TResponse>(Encoding.Default.GetString(cachedResponse));
+
             }
             else
             {
-                response = await getResponseAndAddToCache(request,next,cancellationToken);
+                response = await getResponseAndAddToCache(request, next, cancellationToken);
             }
 
             return response;
         }
 
-        private async Task<TResponse?> getResponseAndAddToCache(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+        private async Task<TResponse?> getResponseAndAddToCache(
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
+            CancellationToken cancellationToken
+            )
         {
             TResponse response = await next();
 
             TimeSpan slidingExpiration = request.SlidingExpiration ?? TimeSpan.FromDays(_cacheSettings.SlidingExpiration);
             DistributedCacheEntryOptions cacheOptions = new() { SlidingExpiration = slidingExpiration };
 
-            byte[] serializedData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(request));
+            byte[] serializedData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(response));
 
             await _cache.SetAsync(request.CacheKey, serializedData, cacheOptions, cancellationToken);
 
-            if (request.CacheGroupKey!= null)
+            if (request.CacheGroupKey != null)
             {
                 await addCacheKeyToGroup(request, slidingExpiration, cancellationToken);
             }

@@ -1,4 +1,5 @@
-﻿using Core.Security.Constants;
+﻿using Core.CrossCuttingConserns.Exceptions.Types;
+using Core.Security.Constants;
 using Core.Security.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -24,10 +25,10 @@ namespace Core.Application.Pipelines.Authorization
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            List<string> userRoleClaims = _httpContextAccessor.HttpContext.User.ClaimRoles();
+            List<string>? userRoleClaims = _httpContextAccessor.HttpContext.User.ClaimRoles();
 
             if (userRoleClaims == null)
-                throw new Exception("You are Not authenticated"); //buraya authexcp yapılcak unutma burayı unutmaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                throw new AuthorizationException("You are Not authenticated"); //buraya authexcp yapılcak unutma burayı unutmaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
             bool isNotMatchedAUserRoleClaimWithRequestRoles = userRoleClaims
                 .FirstOrDefault(
@@ -35,7 +36,7 @@ namespace Core.Application.Pipelines.Authorization
                 )
                 .IsNullOrEmpty();
             if (isNotMatchedAUserRoleClaimWithRequestRoles)
-                throw new Exception("You are Not AutHORİZED");
+                throw new AuthorizationException("You are Not AutHORİZED");
 
             TResponse response = await next();
 

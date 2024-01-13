@@ -41,5 +41,12 @@ namespace Core.CrossCuttingConserns.Exceptions.Handlers
             string details = new ValidationProblemDetails(validationException.Errors).AsJson();
             return Response.WriteAsync(details);
         }
+
+        protected override Task HandleException(AuthorizationException authorizationException)
+        {
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
+            string details = new AuthorizationProblemDetails(authorizationException.Message).AsJson();
+            return Response.WriteAsync(details);
+        }
     }
 }

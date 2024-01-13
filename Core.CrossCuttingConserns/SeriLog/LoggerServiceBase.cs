@@ -15,7 +15,7 @@ namespace Core.CrossCuttingConserns.SeriLog
 
         protected LoggerServiceBase()
         {
-            Logger = null;
+            Logger = null!;
         }
 
         protected LoggerServiceBase(ILogger logger)

@@ -30,8 +30,8 @@ namespace Core.CrossCuttingConserns.Exceptions.Handlers
 
         protected override Task HandleException(Exception exception)
         {
-            Response.StatusCode = StatusCodes.Status400BadRequest;
-            string details = new BusinessProblemDetails(exception.Message).AsJson();
+            Response.StatusCode = StatusCodes.Status500InternalServerError;
+            string details = new InternalServerProblemDetails(exception.Message).AsJson();
             return Response.WriteAsync(details);
         }
 
